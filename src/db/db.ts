@@ -261,3 +261,93 @@ export function updateAppSettings(patch: Partial<AppSettings>) {
     );
   });
 }
+
+export type BackupPayload = {
+  version: 1;
+  exportedAt: string;
+  readings: ReadingInsert[];
+  settings: Pick<
+    AppSettings,
+    "morningReminderTime" | "morningReminderEnabled" | "eveningReminderTime" | "eveningReminderEnabled"
+  >;
+};
+
+function normalizeReadingInsert(input: Partial<ReadingInsert>): ReadingInsert {
+  return {
+    recordedAt: String(input.recordedAt ?? ""),
+    trial1: Number(input.trial1 ?? 0),
+    trial2: Number(input.trial2 ?? 0),
+    trial3: Number(input.trial3 ?? 0),
+    feeling: Math.min(5, Math.max(1, Number(input.feeling ?? 3))) as ReadingInsert["feeling"],
+    eventType: input.eventType ?? null,
+    eventNote: input.eventNote ? String(input.eventNote) : null,
+    cough: Boolean(input.cough),
+    wheeze: Boolean(input.wheeze),
+    nightSymptoms: Boolean(input.nightSymptoms),
+    rescueInhalerPuffs: Math.max(0, Number(input.rescueInhalerPuffs ?? 0)),
+    triggerTags: String(input.triggerTags ?? ""),
+  };
+}
+
+function readingSignature(input: ReadingInsert) {
+  return JSON.stringify(normalizeReadingInsert(input));
+}
+
+export function buildBackupPayload(): BackupPayload {
+  const settings = getAppSettings();
+  const readings = getAllReadings().map(({ id: _id, ...reading }) => reading);
+
+  return {
+    version: 1,
+    exportedAt: formatLocalTimestamp(new Date()),
+    readings,
+    settings: {
+      morningReminderTime: settings.morningReminderTime,
+      morningReminderEnabled: settings.morningReminderEnabled,
+      eveningReminderTime: settings.eveningReminderTime,
+      eveningReminderEnabled: settings.eveningReminderEnabled,
+    },
+  };
+}
+
+export function mergeBackupPayload(rawPayload: unknown) {
+  if (!rawPayload || typeof rawPayload !== "object") {
+    throw new Error("Backup file is not valid JSON.");
+  }
+
+  const payload = rawPayload as Partial<BackupPayload>;
+
+  if (!Array.isArray(payload.readings)) {
+    throw new Error("Backup file does not contain a readings array.");
+  }
+
+  const existing = new Set(
+    getAllReadings().map(({ id: _id, ...reading }) => readingSignature(reading))
+  );
+
+  let mergedCount = 0;
+
+  payload.readings.forEach((reading) => {
+    const normalized = normalizeReadingInsert(reading);
+    const signature = readingSignature(normalized);
+
+    if (existing.has(signature)) {
+      return;
+    }
+
+    insertReading(normalized);
+    existing.add(signature);
+    mergedCount += 1;
+  });
+
+  if (payload.settings) {
+    updateAppSettings({
+      morningReminderTime:
+        payload.settings.morningReminderTime ?? DEFAULT_APP_SETTINGS.morningReminderTime,
+      eveningReminderTime:
+        payload.settings.eveningReminderTime ?? DEFAULT_APP_SETTINGS.eveningReminderTime,
+    });
+  }
+
+  return mergedCount;
+}

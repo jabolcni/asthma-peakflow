@@ -11,14 +11,22 @@ import { FeelingSlider } from "../components/FeelingSlider";
 import { SymptomContextFields } from "../components/SymptomContextFields";
 import { VolumeSlider } from "../components/VolumeSlider";
 import {
+  buildBackupPayload,
   deleteReading,
   formatLocalTimestamp,
   getAllReadings,
   initializeDatabase,
+  mergeBackupPayload,
   parseStoredTimestamp,
   updateReading,
 } from "../db/db";
 import type { EventType, FeelingScore, ReadingRecord } from "../db/schema";
+import {
+  pickBackupJson,
+  serializeBackup,
+  shareBackupFile,
+  writeBackupToDocuments,
+} from "../export/backup";
 import {
   buildCsv,
   saveCsvToPickedDirectory,
@@ -321,6 +329,28 @@ export default function TrendsScreen() {
     }
   };
 
+  const onBackupJson = async () => {
+    try {
+      const payload = buildBackupPayload();
+      const json = serializeBackup(payload);
+      const file = writeBackupToDocuments(json);
+      await shareBackupFile(file);
+    } catch (error) {
+      Alert.alert("Backup failed", error instanceof Error ? error.message : "Could not create backup.");
+    }
+  };
+
+  const onRestoreJson = async () => {
+    try {
+      const payload = await pickBackupJson();
+      const mergedCount = mergeBackupPayload(payload);
+      refreshData();
+      Alert.alert("Restore complete", `Merged ${mergedCount} new reading${mergedCount === 1 ? "" : "s"}.`);
+    } catch (error) {
+      Alert.alert("Restore failed", error instanceof Error ? error.message : "Could not restore backup.");
+    }
+  };
+
   const startEditing = (reading: ReadingRecord) => {
     setEditingId(reading.id);
     setEditDraft({
@@ -553,8 +583,18 @@ export default function TrendsScreen() {
         </Pressable>
       </View>
 
+      <View style={styles.exportRow}>
+        <Pressable style={styles.primaryExport} onPress={onBackupJson} disabled={!readings.length}>
+          <Text style={styles.primaryExportText}>Backup JSON to Drive</Text>
+        </Pressable>
+        <Pressable style={styles.secondaryExport} onPress={() => void onRestoreJson()}>
+          <Text style={styles.secondaryExportText}>Restore JSON</Text>
+        </Pressable>
+      </View>
+
       <Text style={styles.exportHint}>
-        CSV is Excel-compatible, so the saved file can be opened directly in Excel on Android.
+        CSV is Excel-compatible. JSON backup is intended for Google Drive or other file-based
+        backup, and restore merges only missing readings into local storage.
       </Text>
 
       <View style={styles.historyCard}>
