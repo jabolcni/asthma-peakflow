@@ -11,6 +11,7 @@ The app is designed for quick daily use:
 - optionally add symptom/context details such as cough, wheeze, night symptoms, rescue inhaler use, and trigger tags
 - review trend lines for max, min, and mean peak flow
 - export local data as CSV
+- back up data as JSON and restore it with merge behavior
 - edit or delete saved readings
 - set local reminders for morning and evening use (development build required for notifications)
 
@@ -40,6 +41,8 @@ The `Trends` tab shows saved data over time.
 - automatic insight messages based on recent history
 - recent history editor with inline edit/delete
 - CSV export for local storage or sharing
+- JSON backup to Google Drive or other file-based cloud storage via the share sheet
+- JSON restore with merge (adds only missing readings)
 
 ## Tech Stack
 
@@ -232,6 +235,46 @@ Stored reading data includes:
 
 Exports are created as CSV so they can be opened in Excel or shared to other apps.
 
+Backups are also available as JSON snapshots.
+
+- JSON backups can be shared to Google Drive or other cloud storage apps using the native share sheet
+- JSON restore merges only missing readings into local storage
+- restore is additive, not destructive
+- reminder times are included in backup metadata
+
+## Backup and Restore
+
+The `Trends` tab includes file-based backup and restore actions.
+
+### Backup JSON
+
+Use `Backup JSON to Drive` to:
+
+1. create a JSON snapshot of the current local data
+2. open the Android share sheet
+3. save the backup to Google Drive or another file storage app
+
+The backup includes:
+
+- all readings
+- event and symptom/context fields
+- reminder time settings
+
+### Restore JSON
+
+Use `Restore JSON` to:
+
+1. pick a previously exported JSON backup file
+2. import it into the app
+3. merge only readings that do not already exist locally
+
+Restore behavior:
+
+- existing local readings are kept
+- duplicate readings are skipped
+- only missing readings are added
+- this is a merge, not a full overwrite
+
 ## Suggested Test Checklist
 
 Before publishing or sharing builds, test at least the following:
@@ -243,7 +286,9 @@ Before publishing or sharing builds, test at least the following:
 5. Edit an old reading and confirm changes persist after app restart.
 6. Delete a reading and confirm it is removed from trends and history.
 7. Export CSV and verify the file contains all columns.
-8. In a development build, enable reminders and confirm notification scheduling works.
+8. Run JSON backup and verify it can be shared to Google Drive.
+9. Restore a JSON backup and confirm only missing readings are merged.
+10. In a development build, enable reminders and confirm notification scheduling works.
 
 ## GitHub Upload Notes
 
@@ -260,7 +305,7 @@ Possible next steps to improve and expand the app:
 
 1. Add a dedicated history tab with search, filters, and bulk export.
 2. Add PDF doctor reports in addition to CSV export.
-3. Add optional cloud backup / restore (for example Google Drive, OneDrive, or custom backend).
+3. Add automatic scheduled backups or visible backup history.
 4. Add medication plans and adherence tracking beyond rescue inhaler use.
 5. Add trigger customization so users can define their own trigger tags.
 6. Add richer trend analytics such as rolling averages, best-day summaries, and symptom correlation.
