@@ -266,10 +266,6 @@ export type BackupPayload = {
   version: 1;
   exportedAt: string;
   readings: ReadingInsert[];
-  settings: Pick<
-    AppSettings,
-    "morningReminderTime" | "morningReminderEnabled" | "eveningReminderTime" | "eveningReminderEnabled"
-  >;
 };
 
 function normalizeReadingInsert(input: Partial<ReadingInsert>): ReadingInsert {
@@ -294,19 +290,12 @@ function readingSignature(input: ReadingInsert) {
 }
 
 export function buildBackupPayload(): BackupPayload {
-  const settings = getAppSettings();
   const readings = getAllReadings().map(({ id: _id, ...reading }) => reading);
 
   return {
     version: 1,
     exportedAt: formatLocalTimestamp(new Date()),
     readings,
-    settings: {
-      morningReminderTime: settings.morningReminderTime,
-      morningReminderEnabled: settings.morningReminderEnabled,
-      eveningReminderTime: settings.eveningReminderTime,
-      eveningReminderEnabled: settings.eveningReminderEnabled,
-    },
   };
 }
 
@@ -339,15 +328,6 @@ export function mergeBackupPayload(rawPayload: unknown) {
     existing.add(signature);
     mergedCount += 1;
   });
-
-  if (payload.settings) {
-    updateAppSettings({
-      morningReminderTime:
-        payload.settings.morningReminderTime ?? DEFAULT_APP_SETTINGS.morningReminderTime,
-      eveningReminderTime:
-        payload.settings.eveningReminderTime ?? DEFAULT_APP_SETTINGS.eveningReminderTime,
-    });
-  }
 
   return mergedCount;
 }

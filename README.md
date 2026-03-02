@@ -13,7 +13,6 @@ The app is designed for quick daily use:
 - export local data as CSV
 - back up data as JSON and restore it with merge behavior
 - edit or delete saved readings
-- set local reminders for morning and evening use (development build required for notifications)
 
 ## Main Features
 
@@ -52,7 +51,6 @@ The `Trends` tab shows saved data over time.
 - Expo SQLite
 - Expo File System
 - Expo Sharing
-- Expo Notifications
 - `@react-native-community/datetimepicker`
 
 ## Project Structure
@@ -62,7 +60,6 @@ The `Trends` tab shows saved data over time.
 - [src/components](/c:/Users/Janez/asthma-peakflow/src/components): reusable form and UI components
 - [src/db](/c:/Users/Janez/asthma-peakflow/src/db): SQLite schema and persistence helpers
 - [src/export](/c:/Users/Janez/asthma-peakflow/src/export): CSV export helpers
-- [src/notifications](/c:/Users/Janez/asthma-peakflow/src/notifications): reminder scheduling logic
 
 ## Requirements
 
@@ -118,7 +115,7 @@ Limitation:
 
 ### Development Build
 
-For full Android testing, especially reminders, use a development build.
+Use a development build when you want to test the native Android app outside Expo Go limitations.
 
 Create and install one with:
 
@@ -132,7 +129,7 @@ Then install the generated build on your device and run:
 npx expo start --dev-client
 ```
 
-This is the preferred workflow when testing notifications and other native modules.
+This is the preferred workflow when testing the installable Android app with native modules.
 
 ## Build an Android App
 
@@ -199,16 +196,6 @@ This project already includes:
 
 The tab-group `index` route is hidden intentionally so it does not show as a third tab in the bottom bar.
 
-### Notifications in Expo Go
-
-If reminders do not work in Expo Go, that is expected.
-
-Use a development build instead:
-
-```bash
-eas build -p android --profile development
-```
-
 ## Linting
 
 Run:
@@ -240,7 +227,6 @@ Backups are also available as JSON snapshots.
 - JSON backups can be shared to Google Drive or other cloud storage apps using the native share sheet
 - JSON restore merges only missing readings into local storage
 - restore is additive, not destructive
-- reminder times are included in backup metadata
 
 ## Backup and Restore
 
@@ -258,7 +244,6 @@ The backup includes:
 
 - all readings
 - event and symptom/context fields
-- reminder time settings
 
 ### Restore JSON
 
@@ -288,7 +273,7 @@ Before publishing or sharing builds, test at least the following:
 7. Export CSV and verify the file contains all columns.
 8. Run JSON backup and verify it can be shared to Google Drive.
 9. Restore a JSON backup and confirm only missing readings are merged.
-10. In a development build, enable reminders and confirm notification scheduling works.
+10. Install a preview/development build and confirm the app behaves the same as local testing.
 
 ## GitHub Upload Notes
 

@@ -6,7 +6,7 @@ export type EventType = (typeof EVENT_TYPES)[number];
 
 export type FeelingScore = 1 | 2 | 3 | 4 | 5;
 
-export const TRIGGER_TAGS = ["pollen", "cold-air", "smoke"] as const;
+export const TRIGGER_TAGS = ["pollen", "cold-air", "smoke", "dust", "headache"] as const;
 
 export type TriggerTag = (typeof TRIGGER_TAGS)[number];
 
